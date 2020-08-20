@@ -99,15 +99,23 @@ def yes_or_no(question):
 #     else:
 #         print("Serialnumber Not found in master document")
 
-def checkBarcode(barcode, barcodesInMaster):
+def checkBarcodeAndIp(barcode, barcodesInMaster):
     result = False
     for x in barcodesInMaster:
         if barcode.find(x["barcode"]) != -1:
             result = True
             print(x["barcode"])
+            print(x)
             barCodeSet = x["barcode"]
+            if yes_or_no("%s not in sync with master document, do you wish to update ip address?" % barCodeSet):
+                return x
+        if result == False:
+            print("Not in list")
+            x = {}
+            return x
 
-    return result
+
+
 
 
 def on_service_state_change(
@@ -141,10 +149,11 @@ def on_service_state_change(
 
             spkr = Speaker(ip, mac, zoneName, zoneId, "admin", "admin")
             spkr.speakerStatus()
+            spkr.printAll()
             print("\nSpeaker barcode: " + spkr.getBarcode())
-            print(checkBarcode(spkr.getBarcode(), xlsx.getList()))
+            spkr.updateSpeaker(checkBarcodeAndIp(spkr.getBarcode(), xlsx.getList()))
 
-            spkrList.append(spkr)
+            #spkrList.append(spkr)
 
 
         else:

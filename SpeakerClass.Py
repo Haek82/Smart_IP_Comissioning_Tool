@@ -21,9 +21,11 @@ class Speaker:
         self.zoneId = zoneId
         self.user =  user
         self.passwd = passwd
+        self.danteName = ""
         self.ipv4 = {}
         self.zone = {}
         self.id = {}
+        self.danteIdentity = {}
 
         self.boot = {
             "boot" : True
@@ -43,6 +45,7 @@ class Speaker:
         print("Zone Id: " + self.zoneId)
         print("User: " + self.user)
         print("Password: " + self.passwd)
+        print("Dante Name: " + self.danteName)
 
 
     def getRequest(self, url):
@@ -65,6 +68,10 @@ class Speaker:
         zone = self.getRequest('/api/v1/network/zone')
         self.zone = json.loads(zone)
 
+    def getDanteIdentity(self): ## http request Dante identity, pase json string to dictonary
+        danteId = self.getRequest('/api/v1/aoip/dante/identity')
+        self.danteIdentity = json.loads(danteId)
+
     def getId(self):
         id = self.getRequest('/api/v1/device/id')
         self.id = json.loads(id)
@@ -72,14 +79,29 @@ class Speaker:
     def getIp(self):
         return self.ip
 
+    def getMask(self):
+        return self.mask
+
+    def getGw(self):
+        return self.gw
+
     def getBarcode(self):
         return self.barcode
+
+    def updateSpeaker(self, inputDict):
+            print(inputDict)
+            #self.ipv4["ip"] = inputDict["ip"]
+            #self.ipv4["gw"] = inputDict["gw"]
+            #self.ipv4["mask"] = inputDict["mask"]
+            #self.ipv4["mode"] = "static"
+            print("OK.")
 
 
     def speakerStatus(self):
         self.getNetworkInfo()
         self.getZone()
         self.getId()
+        self.getDanteIdentity()
         self.initialSpeakerValues()
 
     def initialSpeakerValues(self):
@@ -88,6 +110,7 @@ class Speaker:
         self.mask = self.ipv4["mask"]
         self.ipMode = self.ipv4["mode"]
         self.hostname = self.ipv4["hostname"]
+        self.danteName = self.danteIdentity["fname"]
 
     def getMac(self):
         return self.mac
