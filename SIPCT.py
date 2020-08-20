@@ -105,7 +105,7 @@ def checkBarcodeAndIp(barcode, barcodesInMaster):
         if barcode.find(x["barcode"]) != -1:
             result = True
             print(x["barcode"])
-            print(x)
+            #print(x)
             barCodeSet = x["barcode"]
             if yes_or_no("%s not in sync with master document, do you wish to update ip address?" % barCodeSet):
                 return x
