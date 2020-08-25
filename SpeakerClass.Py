@@ -22,6 +22,7 @@ class Speaker:
         self.user =  user
         self.passwd = passwd
         self.danteName = ""
+        self.updated = False
         self.ipv4 = {}
         self.zone = {}
         self.id = {}
@@ -35,6 +36,8 @@ class Speaker:
 
     def printAll(self):
         print("\n")
+        print("Current Speaker setting")
+        print("=======================")
         print("Barcode: " + self.barcode)
         print("IP: " + self.ip)
         print("MAC: " + self.mac)
@@ -76,6 +79,9 @@ class Speaker:
         id = self.getRequest('/api/v1/device/id')
         self.id = json.loads(id)
 
+    def getDanteName(self):
+        return self.danteName
+
     def getIp(self):
         return self.ip
 
@@ -88,14 +94,29 @@ class Speaker:
     def getBarcode(self):
         return self.barcode
 
-    def updateSpeaker(self, inputDict):
-            print(inputDict)
-            #self.ipv4["ip"] = inputDict["ip"]
-            #self.ipv4["gw"] = inputDict["gw"]
-            #self.ipv4["mask"] = inputDict["mask"]
-            #self.ipv4["mode"] = "static"
-            print("OK.")
+    def getUpdated(self):
+        return self.updated
 
+    def updateSpeaker(self, inputDict):
+
+        if inputDict is None:
+            print("No Update.")
+            self.updated = False
+
+        bootDict = {
+            'boot' : True
+        }
+
+        if inputDict != None:
+            print(inputDict)
+            self.ipv4["ip"] = inputDict["ip"]
+            self.ipv4["gw"] = inputDict["gw"]
+            self.ipv4["mask"] = inputDict["mask"]
+            self.ipv4["mode"] = "static"
+            self.putRequest("/api/v1/network/ipv4", self.ipv4)
+            self.putRequest("/api/v1/network/zone", self.zone)
+            self.putRequest("/api/v1/device/boot",bootDict)
+            self.updated = True
 
     def speakerStatus(self):
         self.getNetworkInfo()

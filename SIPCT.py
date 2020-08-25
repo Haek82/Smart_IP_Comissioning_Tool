@@ -13,49 +13,10 @@ from zeroconf import IPVersion, ServiceBrowser, ServiceStateChange, Zeroconf, Ze
 from SpeakerClass import Speaker
 from xlsxClass import Xlsx
 
-
-# spkr1 = {
-#   "barcode": "4430AM173",
-#   "ip": "169.254.55.8",
-#   "mask": "255.255.0.0"
-# }
-#
-# spkr2 = {
-#   "barcode": "4430AM174",
-#   "ip": "169.254.55.7",
-#   "mask": "255.255.0.0"
-# }
-#
-# boot = {
-#     "boot": True
-# }
-#
-#
-# masterDoc = []
-# spkrs = []
-#
-# masterDoc.append(spkr1)
-# masterDoc.append(spkr2)
-
 spkrList = []
 
 xlsx = Xlsx("masterList.xlsx")
-#print(xlsx.getList())
 
-
-
-# def getRequest(ip, url):
-#     r = requests.get("http://%s%s" % (ip, url), auth=HTTPBasicAuth('admin', 'admin'))
-#     print("Status code: %s" % r.status_code)
-#     ##print("Payload: %s" % r.text)
-#     return r.text
-#
-# def putRequest(ip, url, payload):
-#     JsonPayload = json.dumps(payload) # Convert dictonary to JSON string
-#     print(JsonPayload)
-#     headers = {"Content-Type": "application/json"}
-#     r = requests.put("http://%s:9000%s" % (ip, url), auth=HTTPBasicAuth('admin', 'admin'), headers = headers, data = JsonPayload)
-#
 def yes_or_no(question):
     reply = str(input(question+' (y/n): ')).lower().strip()
     if reply[0] == 'y':
@@ -64,59 +25,26 @@ def yes_or_no(question):
         return False
     else:
         return yes_or_no("Uhhhh... please enter ")
-#
-# def checkIp(ip1, ip2):
-#     if (ip1.find(ip2) != -1):
-#         return True
-#     else:
-#         return False
-#
-# def updateSpeaker(bool, dict, ip, ipNow):
-#     if bool:
-#         dict["ipv4"]["ip"] = ip
-#
-#         putRequest(ipNow,"/api/v1/network/ipv4", dict["ipv4"])
-#         putRequest(ipNow,"/api/v1/network/zone", dict["zone"])
-#         putRequest(ipNow, "/api/v1/device/boot", boot)
-#
-#
-# def checkBarCodeAndIp(dict):
-#     result = False
-#     for x in masterDoc:
-#         if (dict["id"]["barcode"].find(x["barcode"]) != -1):
-#             result = True
-#             barCodeSet = x["barcode"]
-#             ipCodeSet = x["ip"]
-#     if result:
-#         print("%s serialnumber found in master document, checking ip" % barCodeSet)
-#         print("Master list ip : %s" % ipCodeSet)
-#         print("Speaker ip : %s" % dict["ipv4"]["ip"])
-#         #print(checkIp(ipCodeSet, dict["ipv4"]["ip"]))
-#         if checkIp(ipCodeSet, dict["ipv4"]["ip"]):
-#             print("speaker ip matched to master file")
-#         else:
-#             updateSpeaker(yes_or_no("%s not in sync with master document, do you wish to update ip address?" % barCodeSet), dict, ipCodeSet, dict["ipv4"]["ip"] )
-#     else:
-#         print("Serialnumber Not found in master document")
 
-def checkBarcodeAndIp(barcode, barcodesInMaster):
+def checkBarcodeAndIp(barcode, ip, gw, mask, barcodesInMaster):
     result = False
     for x in barcodesInMaster:
         if barcode.find(x["barcode"]) != -1:
             result = True
-            print(x["barcode"])
+            print(x["barcode"] + " found in master list")
             #print(x)
             barCodeSet = x["barcode"]
-            if yes_or_no("%s not in sync with master document, do you wish to update ip address?" % barCodeSet):
-                return x
-        if result == False:
-            print("Not in list")
-            x = {}
-            return x
 
+            if x["ip"] == ip and x["gw"] == gw and x["mask"] == mask:
+                print("Speaker config matches master list")
+            else:
+                if yes_or_no("%s not in sync with master document, do you wish to update ip address?" % barCodeSet):
 
-
-
+                    return x
+    if result == False:
+        print("Not in master list")
+        x = {}
+        return x
 
 def on_service_state_change(
     zeroconf: Zeroconf, service_type: str, name: str, state_change: ServiceStateChange
@@ -150,8 +78,18 @@ def on_service_state_change(
             spkr = Speaker(ip, mac, zoneName, zoneId, "admin", "admin")
             spkr.speakerStatus()
             spkr.printAll()
+            list = xlsx.getList()
             print("\nSpeaker barcode: " + spkr.getBarcode())
-            spkr.updateSpeaker(checkBarcodeAndIp(spkr.getBarcode(), xlsx.getList()))
+            spkr.updateSpeaker(checkBarcodeAndIp(spkr.getBarcode(), spkr.getIp(), spkr.getGw(), spkr.getMask(), list))
+            if spkr.getUpdated():
+                print("Adding MAC address and Dante name to master list")
+                for i in range(0, len(list)):
+                    if list[i]["barcode"] == spkr.getBarcode():
+                        i = i + 2
+                        xlsx.setDanteNameAndMac(i, spkr.getDanteName(), spkr.getMac())
+            else:
+                print("Master list not updated")
+
 
             #spkrList.append(spkr)
 
@@ -163,7 +101,7 @@ def on_service_state_change(
 
 if __name__ == '__main__':
 
-    logging.basicConfig(level=logging.DEBUG)
+    #logging.basicConfig(level=logging.DEBUG)
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', action='store_true')
