@@ -8,4 +8,4 @@ If update is run and completed the program will write speaker mac address and Da
 <h3>NOTE !</h3>
 Excel file can not be open during the time program writes to master list.
 
-Binary releases can be found on <a href="https://github.com/Haek82/Smart_IP_Comissioning_Tool/releases">Releases</a>
+Binary releases can be found on the <a href="https://github.com/Haek82/Smart_IP_Comissioning_Tool/releases">releases</a> page
