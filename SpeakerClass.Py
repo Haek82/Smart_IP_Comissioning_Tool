@@ -1,5 +1,6 @@
 from typing import cast
 import json
+import sys
 
 import requests
 from requests.auth import HTTPBasicAuth
@@ -56,6 +57,7 @@ class Speaker:
         print("Status code: %s" % r.status_code)
         ##print("Payload: %s" % r.text) ##debug
         return r.text
+
 
     def putRequest(self, url, payload):
         JsonPayload = json.dumps(payload) # Convert dictonary to JSON string
@@ -119,11 +121,19 @@ class Speaker:
             self.updated = True
 
     def speakerStatus(self):
-        self.getNetworkInfo()
-        self.getZone()
-        self.getId()
-        self.getDanteIdentity()
-        self.initialSpeakerValues()
+        try:
+            self.getNetworkInfo()
+            self.getZone()
+            self.getId()
+            self.getDanteIdentity()
+            self.initialSpeakerValues()
+        except OSError as err:
+            print("\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ EXCEPTION !!!! @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ ")
+            print("\nOS error: {0}".format(err))
+            print("\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ ")
+        except:
+            print("Unexpected error:", sys.exc_info()[0])
+            raise
 
     def initialSpeakerValues(self):
         self.barcode = self.id["barcode"]

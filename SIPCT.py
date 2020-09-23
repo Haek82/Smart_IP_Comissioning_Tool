@@ -1,6 +1,11 @@
 import argparse
 import logging
 import socket
+import sys
+
+from netifaces import interfaces, ifaddresses, AF_INET
+from netaddr import IPNetwork, IPAddress
+
 from time import sleep
 from typing import cast
 import json
@@ -15,7 +20,7 @@ from xlsxClass import Xlsx
 
 spkrList = []
 
-xlsx = Xlsx("masterList.xlsx")
+#xlsx = Xlsx("masterList.xlsx")
 
 def yes_or_no(question):
     reply = str(input(question+' (y/n): ')).lower().strip()
@@ -43,12 +48,14 @@ def checkBarcodeAndIp(barcode, ip, gw, mask, barcodesInMaster):
                     return x
     if result == False:
         print("Not in master list")
-        x = {}
-        return x
+        #x = {}
+        #return x
 
 def on_service_state_change(
     zeroconf: Zeroconf, service_type: str, name: str, state_change: ServiceStateChange
 ) -> None:
+    print("##################################################################################################################\n")
+
     print("Service %s of type %s state changed: %s" % (name, service_type, state_change))
 
     if state_change is ServiceStateChange.Added:
@@ -75,6 +82,7 @@ def on_service_state_change(
             else:
                 print("  No properties")
 
+
             spkr = Speaker(ip, mac, zoneName, zoneId, "admin", "admin")
             spkr.speakerStatus()
             spkr.printAll()
@@ -87,10 +95,8 @@ def on_service_state_change(
                     if list[i]["barcode"] == spkr.getBarcode():
                         i = i + 2
                         xlsx.setDanteNameAndMac(i, spkr.getDanteName(), spkr.getMac())
-            else:
-                print("Master list not updated")
-
-
+                    else:
+                        print("Master list not updated")
             #spkrList.append(spkr)
 
 
@@ -98,33 +104,28 @@ def on_service_state_change(
             print("  No info")
         print('\n')
 
+        input("Press enter to continue...\n")
+
 
 if __name__ == '__main__':
 
     #logging.basicConfig(level=logging.DEBUG)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--debug', action='store_true')
-    parser.add_argument('--find', action='store_true', help='Browse all available services')
-    version_group = parser.add_mutually_exclusive_group()
-    version_group.add_argument('--v6', action='store_true')
-    version_group.add_argument('--v6-only', action='store_true')
+    parser.add_argument('--file', action="store", dest="fileName", help="Define excel filename" )
     args = parser.parse_args()
 
-    if args.debug:
-        logging.getLogger('zeroconf').setLevel(logging.DEBUG)
-    if args.v6:
-        ip_version = IPVersion.All
-    elif args.v6_only:
-        ip_version = IPVersion.V6Only
-    else:
-        ip_version = IPVersion.V4Only
+    if args.fileName is not None:
+        print("File name is: " + args.fileName)
+        xlsx = Xlsx(args.fileName)
 
-    zeroconf = Zeroconf(ip_version=ip_version)
+    else:
+        print("No filename")
+        quit()
+
+    zeroconf = Zeroconf(ip_version=IPVersion.V4Only)
 
     services = ["_smart_ip._tcp.local."]
-    if args.find:
-        services = list(ZeroconfServiceTypes.find(zc=zeroconf))
 
     print("\nBrowsing %d service(s), press Ctrl-C to exit...\n" % len(services))
     browser = ServiceBrowser(zeroconf, services, handlers=[on_service_state_change])
