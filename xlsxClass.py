@@ -28,6 +28,7 @@ class Xlsx:
                 return False
         return True
 
+
     def importFromExcel(self):
         for row in self.sheet.iter_rows(min_row=4, min_col=1, max_col=5, values_only=True):
             if self.validate_ip(row[1]) is True and self.validate_ip(row[2]) is True and self.validate_ip(row[3]) is True:
