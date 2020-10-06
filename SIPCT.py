@@ -2,6 +2,8 @@ import argparse
 import logging
 import socket
 import sys
+import time
+import os
 
 from netifaces import interfaces, ifaddresses, AF_INET
 from netaddr import IPNetwork, IPAddress
@@ -20,8 +22,6 @@ from xlsxClass import Xlsx
 
 spkrList = []
 
-#xlsx = Xlsx("masterList.xlsx")
-
 def yes_or_no(question):
     reply = str(input(question+' (y/n): ')).lower().strip()
     if reply[0] == 'y':
@@ -37,19 +37,63 @@ def checkBarcodeAndIp(barcode, ip, gw, mask, barcodesInMaster):
         if barcode.find(x["barcode"]) != -1:
             result = True
             print(x["barcode"] + " found in master list")
-            #print(x)
             barCodeSet = x["barcode"]
 
             if x["ip"] == ip and x["gw"] == gw and x["mask"] == mask:
                 print("Speaker config matches master list")
             else:
+                print("\nDesired configuration found in list")
+                print("====================================")
+                print("IP: " + x["ip"])
+                print("Mask: " + x["mask"])
+                print("GW: " + x["gw"])
+                print("")
                 if yes_or_no("%s not in sync with master document, do you wish to update ip address?" % barCodeSet):
-
                     return x
     if result == False:
         print("Not in master list")
-        #x = {}
-        #return x
+
+
+def on_service_state_change_SN(
+    zeroconf: Zeroconf, service_type: str, name: str, state_change: ServiceStateChange
+) -> None:
+
+    if state_change is ServiceStateChange.Added:
+        info = zeroconf.get_service_info(service_type, name)
+
+        if info:
+            addresses = ["%s:%d" % (socket.inet_ntoa(addr), cast(int, info.port)) for addr in info.addresses]
+            ip = "".join(["%s" % socket.inet_ntoa(addr) for addr in info.addresses]) ## join list together
+            if info.properties:
+
+                for key, value in info.properties.items(): ## parse properties to strings
+                    if (key.decode("utf-8").find("mac") != -1):
+                        mac = value.decode("utf-8")
+
+                    if (key.decode("utf-8").find("zonename") != -1):
+                        zoneName = value.decode("utf-8")
+
+                    if (key.decode("utf-8").find("zoneid") != -1):
+                        zoneId = value.decode("utf-8")
+
+
+        spkr = Speaker(ip, mac, zoneName, zoneId, "admin", "admin")
+        spkr.speakerStatus()
+        if spkr.getBarcode() == args.searchSN:
+            print("\nSpeaker found !")
+            spkr.printAll()
+
+            while True :
+                input("\nPress enter to blink.. or Ctrl-C to quit")
+                spkr.blink(True)
+                print("Blinking...")
+                time.sleep(5)
+                spkr.blink(False)
+
+    else:
+        print("  No info")
+    print('\n')
+
 
 def on_service_state_change(
     zeroconf: Zeroconf, service_type: str, name: str, state_change: ServiceStateChange
@@ -90,13 +134,13 @@ def on_service_state_change(
             print("\nSpeaker barcode: " + spkr.getBarcode())
             spkr.updateSpeaker(checkBarcodeAndIp(spkr.getBarcode(), spkr.getIp(), spkr.getGw(), spkr.getMask(), list))
             if spkr.getUpdated():
-                print("Adding MAC address and Dante name to master list")
+                print("Adding MAC address and Dante name written to master list")
                 for i in range(0, len(list)):
                     if list[i]["barcode"] == spkr.getBarcode():
                         i = i + 2
                         xlsx.setDanteNameAndMac(i, spkr.getDanteName(), spkr.getMac())
-                    else:
-                        print("Master list not updated")
+            else:
+                print("Master list not updated")
             #spkrList.append(spkr)
 
 
@@ -104,31 +148,55 @@ def on_service_state_change(
             print("  No info")
         print('\n')
 
-        input("Press enter to continue...\n")
+        if autoEnter is False:
+            input("Press enter to continue...\n")
+    print("Waiting for Speaker...")
+
+
+
 
 
 if __name__ == '__main__':
 
+    os.system("cls")
     #logging.basicConfig(level=logging.DEBUG)
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--file', action="store", dest="fileName", help="Define excel filename" )
+    parser.add_argument('--auto', action="store_true", dest="autoEnter", help="Skips speakers that is in sync, or not found in the master list (Auto Enter)" )
+    parser.add_argument('--search', action="store", dest="searchSN", help="Search for Speaker by S/N")
     args = parser.parse_args()
 
     if args.fileName is not None:
         print("File name is: " + args.fileName)
         xlsx = Xlsx(args.fileName)
+        search = False
+    elif args.searchSN is not None:
+        search = True
 
     else:
         print("No filename")
-        quit()
+        sys.exit()
+
+    if args.autoEnter is True:
+        autoEnter = True
+    else:
+        autoEnter = False
+
+    #xlsx.printAllSpeakersInExcel()
 
     zeroconf = Zeroconf(ip_version=IPVersion.V4Only)
 
     services = ["_smart_ip._tcp.local."]
 
-    print("\nBrowsing %d service(s), press Ctrl-C to exit...\n" % len(services))
-    browser = ServiceBrowser(zeroconf, services, handlers=[on_service_state_change])
+    if search is True:
+        print("Searching for Speaker " + args.searchSN)
+        browser = ServiceBrowser(zeroconf, services, handlers=[on_service_state_change_SN])
+    else:
+        print("\nBrowsing %d service(s), press Ctrl-C to exit...\n" % len(services))
+        print("Waiting for Speaker...")
+        browser = ServiceBrowser(zeroconf, services, handlers=[on_service_state_change])
+
 
     try:
         while True:

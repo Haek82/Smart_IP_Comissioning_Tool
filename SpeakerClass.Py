@@ -47,21 +47,21 @@ class Speaker:
         print("Hostname: " + self.hostname)
         print("Zone Name: " + self.zoneName)
         print("Zone Id: " + self.zoneId)
-        print("User: " + self.user)
-        print("Password: " + self.passwd)
+        #print("User: " + self.user)
+        #print("Password: " + self.passwd)
         print("Dante Name: " + self.danteName)
 
 
     def getRequest(self, url):
         r = requests.get("http://%s:9000%s" % (self.ip, url), auth=HTTPBasicAuth(self.user, self.passwd))
-        print("Status code: %s" % r.status_code)
+        #print("Status code: %s" % r.status_code)
         ##print("Payload: %s" % r.text) ##debug
         return r.text
 
 
     def putRequest(self, url, payload):
         JsonPayload = json.dumps(payload) # Convert dictonary to JSON string
-        print(JsonPayload)
+        #print(JsonPayload)
         headers = {"Content-Type": "application/json"}
         r = requests.put("http://%s:9000%s" % (self.ip, url), auth=HTTPBasicAuth(self.user, self.passwd), headers = headers, data = JsonPayload)
 
@@ -99,6 +99,28 @@ class Speaker:
     def getUpdated(self):
         return self.updated
 
+    def blink(self, state):
+        blinkOn = {
+            'take' : True,
+            'flash' : True,
+            'color' : "YELLOW",
+            'intensity' : 100,
+            "ledIntensity" : 100
+        }
+
+        blinkOff = {
+            'take' : False,
+            'flash' : False,
+            'color' : "YELLOW",
+            'intensity' : 100,
+            "ledIntensity" : 100
+        }
+
+        if state is True:
+            self.putRequest("/api/v1/device/led", blinkOn)
+        if state is False:
+            self.putRequest("/api/v1/device/led", blinkOff)
+
     def updateSpeaker(self, inputDict):
 
         if inputDict is None:
@@ -110,7 +132,7 @@ class Speaker:
         }
 
         if inputDict != None:
-            print(inputDict)
+            #print(inputDict)
             self.ipv4["ip"] = inputDict["ip"]
             self.ipv4["gw"] = inputDict["gw"]
             self.ipv4["mask"] = inputDict["mask"]
