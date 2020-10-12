@@ -24,16 +24,19 @@ spkrList = []
 
 def blink(spkr):
     while True :
-        #input("\nPress enter to blink.. or Ctrl-C to quit")
         reply = str(input("Blink or next? (b/n): ")).lower().strip()
-        if reply[0] == 'b':
-            spkr.blink(True)
-            print("Blinking...")
-            time.sleep(5)
-            spkr.blink(False)
-        if reply[0] == 'n':
-            break
-
+        if len(reply) > 0:
+            if reply[0] == 'b':
+                spkr.blink(True)
+                print("Blinking...")
+                time.sleep(5)
+                spkr.blink(False)
+            if reply[0] == 'n':
+                break
+            else:
+                print("Uuh.. Please enter b or n....")
+        else:
+            print("Uuh.. Please enter b or n....")
 
 def yes_or_no(question):
     reply = str(input(question+' (y/n): ')).lower().strip()
