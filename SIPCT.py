@@ -22,6 +22,19 @@ from xlsxClass import Xlsx
 
 spkrList = []
 
+def blink(spkr):
+    while True :
+        #input("\nPress enter to blink.. or Ctrl-C to quit")
+        reply = str(input("Blink or next? (b/n): ")).lower().strip()
+        if reply[0] == 'b':
+            spkr.blink(True)
+            print("Blinking...")
+            time.sleep(5)
+            spkr.blink(False)
+        if reply[0] == 'n':
+            break
+
+
 def yes_or_no(question):
     reply = str(input(question+' (y/n): ')).lower().strip()
     if reply[0] == 'y':
@@ -54,7 +67,7 @@ def checkBarcodeAndIp(barcode, ip, gw, mask, barcodesInMaster):
         print("Not in master list")
 
 
-def on_service_state_change_SN(
+def on_service_state_change_search(
     zeroconf: Zeroconf, service_type: str, name: str, state_change: ServiceStateChange
 ) -> None:
 
@@ -79,16 +92,25 @@ def on_service_state_change_SN(
 
         spkr = Speaker(ip, mac, zoneName, zoneId, "admin", "admin")
         spkr.speakerStatus()
-        if spkr.getBarcode() == args.searchSN:
-            print("\nSpeaker found !")
-            spkr.printAll()
+        if args.searchSN is not None:
+            #if spkr.getBarcode() == args.searchSN:
+            if spkr.getBarcode().find(args.searchSN) != -1:
+                print("\nSpeaker found !")
+                spkr.printAll()
+                blink(spkr)
+        elif args.searchHN is not None:
+            #if spkr.getHostName() == args.searchHN:
+            if spkr.getHostName().find(args.searchHN) != -1:
+                print("\nSpeaker found !")
+                spkr.printAll()
+                blink(spkr)
+        elif args.searchDN is not None:
+            #if spkr.getDanteName() == args.searchDN:
+            if spkr.getDanteName().find(args.searchDN) != -1:
+                print("\nSpeaker found !")
+                spkr.printAll()
+                blink(spkr)
 
-            while True :
-                input("\nPress enter to blink.. or Ctrl-C to quit")
-                spkr.blink(True)
-                print("Blinking...")
-                time.sleep(5)
-                spkr.blink(False)
 
     else:
         print("  No info")
@@ -162,18 +184,34 @@ if __name__ == '__main__':
     #logging.basicConfig(level=logging.DEBUG)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--file', action="store", dest="fileName", help="Define excel filename" )
+    parser.add_argument('--file', action="store", dest="fileName", help="Config Speakers i batch run, define excel file." )
     parser.add_argument('--auto', action="store_true", dest="autoEnter", help="Skips speakers that is in sync, or not found in the master list (Auto Enter)" )
-    parser.add_argument('--search', action="store", dest="searchSN", help="Search for Speaker by S/N")
+    parser.add_argument('--search_sn', action="store", dest="searchSN", help="Search for Speaker by S/N")
+    parser.add_argument('--search_hn', action="store", dest="searchHN", help="Search for Speaker by Host Name")
+    parser.add_argument('--search_dn', action="store", dest="searchDN", help="Search for Speaker by Dante Name")
     args = parser.parse_args()
 
     if args.fileName is not None:
         print("File name is: " + args.fileName)
         xlsx = Xlsx(args.fileName)
+        try:
+            xlsx.setDate()
+        except OSError as err:
+            print("\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ EXCEPTION !!!! @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ ")
+            print("\nOS error: {0}".format(err))
+            print("Excel file open!")
+            print("\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ ")
+            sys.exit()
+        except:
+            print("Unexpected error:", sys.exc_info()[0])
+            raise
         search = False
     elif args.searchSN is not None:
         search = True
-
+    elif args.searchHN is not None:
+        search = True
+    elif args.searchDN is not None:
+        search = True
     else:
         print("No filename")
         sys.exit()
@@ -190,8 +228,8 @@ if __name__ == '__main__':
     services = ["_smart_ip._tcp.local."]
 
     if search is True:
-        print("Searching for Speaker " + args.searchSN)
-        browser = ServiceBrowser(zeroconf, services, handlers=[on_service_state_change_SN])
+        print("Searching for Speaker ")
+        browser = ServiceBrowser(zeroconf, services, handlers=[on_service_state_change_search])
     else:
         print("\nBrowsing %d service(s), press Ctrl-C to exit...\n" % len(services))
         print("Waiting for Speaker...")

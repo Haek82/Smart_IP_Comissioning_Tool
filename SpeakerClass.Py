@@ -23,6 +23,7 @@ class Speaker:
         self.user =  user
         self.passwd = passwd
         self.danteName = ""
+        self.danteMac = ""
         self.updated = False
         self.ipv4 = {}
         self.zone = {}
@@ -50,12 +51,13 @@ class Speaker:
         #print("User: " + self.user)
         #print("Password: " + self.passwd)
         print("Dante Name: " + self.danteName)
+        print("Dante MAC:" + self.danteMac)
 
 
     def getRequest(self, url):
         r = requests.get("http://%s:9000%s" % (self.ip, url), auth=HTTPBasicAuth(self.user, self.passwd))
         #print("Status code: %s" % r.status_code)
-        ##print("Payload: %s" % r.text) ##debug
+        #print("Payload: %s" % r.text) ##debug
         return r.text
 
 
@@ -95,6 +97,9 @@ class Speaker:
 
     def getBarcode(self):
         return self.barcode
+
+    def getHostName(self):
+        return self.hostname
 
     def getUpdated(self):
         return self.updated
@@ -164,6 +169,7 @@ class Speaker:
         self.ipMode = self.ipv4["mode"]
         self.hostname = self.ipv4["hostname"]
         self.danteName = self.danteIdentity["fname"]
+        self.danteMac = self.danteIdentity["mac"]
 
     def getMac(self):
         return self.mac

@@ -8,4 +8,7 @@ If update is run and completed the program will write speaker mac address and Da
 <h3>NOTE !</h3>
 Excel file can not be open during the time program writes to master list.
 
+Tested with firmware version 44x0-1.1.11-202007021238,
+problems with earlier firmware versions due to constant development of API.
+
 Binary releases can be found on the <a href="https://github.com/Haek82/Smart_IP_Comissioning_Tool/releases">releases</a> page

@@ -1,6 +1,7 @@
 from openpyxl import load_workbook
 import json
 import sys
+import datetime
 
 class Xlsx:
     #This is the excel import / export class
@@ -14,7 +15,7 @@ class Xlsx:
         self.filename = filename
 
     def validate_ip(self, s):
-        ##print(s)
+        #print(s)
         if s is None:
             return False
         a = s.split('.')
@@ -43,7 +44,11 @@ class Xlsx:
                 print("Ip infromation in excel wrong or missing")
                 sys.exit()
 
-
+    def setDate(self):
+        x = datetime.datetime.now()
+        dateCell = "G1"
+        self.sheet[dateCell] = x.strftime("%d-%m-%y %H:%M:%S")
+        self.workbook.save(filename=self.filename)
 
     def setDanteNameAndMac(self, row, name, mac):
         macCell = "E" + str(row+2)
