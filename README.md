@@ -7,7 +7,7 @@ Once discovered the program will compare the speaker configuration to the master
 If update is run and completed the program will write speaker mac address and Dante name to maste list.<br>
 <h3>NOTE !</h3>
 Excel file can not be open during the time program writes to master list.
-
+<br>
 Tested with firmware version 44x0-1.1.11-202007021238,
 problems with earlier firmware versions due to constant development of API.
 
