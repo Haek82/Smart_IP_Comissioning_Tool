@@ -158,7 +158,9 @@ def on_service_state_change(
             list = xlsx.getList()
             print("\nSpeaker barcode: " + spkr.getBarcode())
             spkr.updateSpeaker(checkBarcodeAndIp(spkr.getBarcode(), spkr.getIp(), spkr.getGw(), spkr.getMask(), list))
-            if spkr.getUpdated():
+            if spkr.getUpdated() or args.reWriteNames:
+                if args.reWriteNames:
+                    print("Re-writing Dante Name")
                 print("Adding MAC address and Dante name written to master list")
                 for i in range(0, len(list)):
                     if list[i]["barcode"] == spkr.getBarcode():
@@ -189,6 +191,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--file', action="store", dest="fileName", help="Config Speakers i batch run, define excel file." )
     parser.add_argument('--auto', action="store_true", dest="autoEnter", help="Skips speakers that is in sync, or not found in the master list (Auto Enter)" )
+    parser.add_argument('--rwn', action="store_true", dest ="reWriteNames", help="Re-Write Dante names to excel file.")
     parser.add_argument('--search_sn', action="store", dest="searchSN", help="Search for Speaker by S/N")
     parser.add_argument('--search_hn', action="store", dest="searchHN", help="Search for Speaker by Host Name")
     parser.add_argument('--search_dn', action="store", dest="searchDN", help="Search for Speaker by Dante Name")
