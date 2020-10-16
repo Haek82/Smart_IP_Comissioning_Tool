@@ -19,22 +19,26 @@ from zeroconf import IPVersion, ServiceBrowser, ServiceStateChange, Zeroconf, Ze
 
 from SpeakerClass import Speaker
 from xlsxClass import Xlsx
+from BlinkInsults import BlinkInsults
 
 spkrList = []
 
 def blink(spkr):
+    ins = BlinkInsults()
     while True :
         reply = str(input("Blink or next? (b/n): ")).lower().strip()
         if len(reply) > 0:
             if reply[0] == 'b':
+                ins.blinkIncr()
                 spkr.blink(True)
                 print("Blinking...")
                 time.sleep(5)
                 spkr.blink(False)
+                continue
             if reply[0] == 'n':
                 break
             else:
-                print("Uuh.. Please enter b or n....")
+                print("Uuh..? Please enter b or n....")
         else:
             print("Uuh.. Please enter b or n....")
 
@@ -159,11 +163,11 @@ def on_service_state_change(
             print("\nSpeaker barcode: " + spkr.getBarcode())
             spkr.updateSpeaker(checkBarcodeAndIp(spkr.getBarcode(), spkr.getIp(), spkr.getGw(), spkr.getMask(), list))
             if spkr.getUpdated() or args.reWriteNames:
-                if args.reWriteNames:
-                    print("Re-writing Dante Name")
-                print("Adding MAC address and Dante name written to master list")
                 for i in range(0, len(list)):
                     if list[i]["barcode"] == spkr.getBarcode():
+                        if args.reWriteNames:
+                            print("Re-writing Dante Name")
+                        print("Adding MAC address and Dante name written to master list")
                         i = i + 2
                         xlsx.setDanteNameAndMac(i, spkr.getDanteName(), spkr.getMac())
             else:
@@ -198,7 +202,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.fileName is not None:
-        print("File name is: " + args.fileName)
+        print("File name : " + args.fileName)
         xlsx = Xlsx(args.fileName)
         try:
             xlsx.setDate()
